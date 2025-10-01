@@ -1,0 +1,15 @@
+streamlit
+scipy
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+yfinance
+sqlalchemy
+psycopg2-binary
