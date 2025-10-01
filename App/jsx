@@ -1,0 +1,124 @@
+import './App.css';
+
+import { useState } from 'react';
+
+import { FaSpinner } from 'react-icons/fa';
+
+function App() {
+  const [tickers, setTickers] = useState('AAPL,MSFT,GOOGL');
+  const [topN, setTopN] = useState(20);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleScreen = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await fetch('https://cuddly-space-sniffle-4jpjj6qvp5gj37675-8000.app.github.dev/screen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tickers: tickers.split(','), top_n: topN })
+      });
+      if (!res.ok) {
+        throw new Error('API error: ' + res.status);
+      }
+      const data = await res.json();
+      if (!data.ranking || Object.keys(data.ranking).length === 0) {
+        setError('No results found. Please check tickers or try again later.');
+      } else {
+        setResult(data);
+      }
+    } catch (err) {
+      setError('Failed to fetch results. ' + err.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-8 flex flex-col items-center">
+      <h1 className="text-4xl font-extrabold mb-6 text-blue-700 drop-shadow">Multifactor Quant Stock Screener</h1>
+      <div className="mb-6 w-full max-w-xl bg-white rounded-lg shadow p-6 flex flex-col gap-4">
+        <label className="font-semibold">Stock Tickers</label>
+        <input
+          type="text"
+          className="border p-2 rounded w-full"
+          value={tickers}
+          onChange={e => setTickers(e.target.value)}
+          placeholder="Enter tickers (comma separated)"
+        />
+        <label className="font-semibold">Top N Stocks</label>
+        <input
+          type="number"
+          className="border p-2 rounded w-32"
+          value={topN}
+          onChange={e => setTopN(Number(e.target.value))}
+          min={1}
+          max={100}
+        />
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold flex items-center justify-center gap-2"
+          onClick={handleScreen}
+          disabled={loading}
+        >
+          {loading ? <FaSpinner className="animate-spin" /> : null}
+          {loading ? 'Screening...' : 'Screen Stocks'}
+        </button>
+        {error && <div className="text-red-600 font-semibold mt-2">{error}</div>}
+      </div>
+      {result && (
+        <div className="mt-10 w-full max-w-2xl bg-white rounded-lg shadow p-6">
+          <h2 className="text-2xl font-bold mb-4 text-blue-800">Top {topN} Ranked Stocks</h2>
+          <table className="min-w-full bg-white border rounded-lg overflow-hidden">
+            <thead className="bg-blue-100">
+              <tr>
+                <th className="border px-2 py-1">Ticker</th>
+                <th className="border px-2 py-1">Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(result.ranking).map(([ticker, score]) => (
+                <tr key={ticker} className="hover:bg-blue-50">
+                  <td className="border px-2 py-1 font-bold text-blue-700">{ticker}</td>
+                  <td className="border px-2 py-1">{score.toFixed(3)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-8">
+            <h3 className="font-semibold mb-2 text-blue-700">Factor Breakdown</h3>
+            <table className="min-w-full bg-white border rounded-lg overflow-hidden">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="border px-2 py-1">Factor</th>
+                  <th className="border px-2 py-1">Ticker</th>
+                  <th className="border px-2 py-1">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(result.breakdown).map(([factor, scores]) => (
+                  Object.entries(scores).map(([ticker, score]) => (
+                    <tr key={factor + ticker} className="hover:bg-blue-50">
+                      <td className="border px-2 py-1">{factor}</td>
+                      <td className="border px-2 py-1">{ticker}</td>
+                      <td className="border px-2 py-1">{score.toFixed(3)}</td>
+                    </tr>
+                  ))
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {loading && (
+        <div className="mt-8 flex flex-col items-center">
+          <FaSpinner className="animate-spin text-4xl text-blue-600 mb-2" />
+          <span className="text-blue-700 font-semibold">Screening stocks, please wait...</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;

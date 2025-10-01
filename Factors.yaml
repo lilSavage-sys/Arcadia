@@ -1,0 +1,23 @@
+ Example factor definitions and weights
+value:
+  weight: 0.4
+  metrics:
+    - EV_EBITDA
+    - PE
+    - PB
+momentum:
+  weight: 0.3
+  metrics:
+    - return_12m
+    - return_6m
+    - RSI
+quality:
+  weight: 0.2
+  metrics:
+    - ROE
+    - ROIC
+    - FCF_yield
+sentiment:
+  weight: 0.1
+  metrics:
+    - news_sentiment
